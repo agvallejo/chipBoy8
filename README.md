@@ -26,7 +26,7 @@ This project uses **CMake** to ensure portability across different platforms and
 
 The **build** directory should be populated now with whatever files your compiler needs. In case of Visual Studio on Windows those are *.sln* and *.vcxproj* files (among others). CMake can be instructed to populate **build** with files for other compilers (Projects for XCode or Makefiles, for instance), as explained in [the documentation of CMake](http://www.cmake.org/cmake/help/v3.0/manual/cmake.1.html)
 
-The project must be now be compiled. In Visual Studio that is pressing *F5*, for *NIX systems most likely `./configure && make`.
+The project must be compiled now. In Visual Studio that is pressing *F5* in the IDE, while for *NIX systems most likely `./configure && make` is the way to go.
 
 ## TODO
   - Fix bugs (known and unknown)

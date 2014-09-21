@@ -1,9 +1,9 @@
 #include "gfx.h"
 
 gfx::gfx(const uint8_t* screenPtr){
+	//The screen "chipBoy8" draws to is observed by gfx::screen*
 	screen = screenPtr;
 
-	//Creación de la ventana
 	window = SDL_CreateWindow(	PROG_NAME,
 								SDL_WINDOWPOS_UNDEFINED,
 								SDL_WINDOWPOS_UNDEFINED,
@@ -11,29 +11,26 @@ gfx::gfx(const uint8_t* screenPtr){
 								SCREEN_HEIGHT,
 								SDL_WINDOW_SHOWN);
 
-	//Creación del renderizador
 	renderer = SDL_CreateRenderer(	window,
 									-1,
 									SDL_RENDERER_ACCELERATED);
 
-	//Creación de la textura
 	texture = SDL_CreateTexture(renderer,
 								SDL_GetWindowPixelFormat(window),
 								SDL_TEXTUREACCESS_STREAMING,
 								CHIP8_WIDTH,
 								CHIP8_HEIGHT);
 
-	//Creación de la superficie
 	surface = SDL_CreateRGBSurface(	0,
 									CHIP8_WIDTH,
 									CHIP8_HEIGHT,
 									32,
 									0,0,0,0);
 
+	//If there was any error upon initialization, show it
 	if (!window || !renderer || !texture || !surface)
 		std::cout << "Error initialiing graphics" << std::endl;
 
-	//Inicialización del objetivo
 	renderTarget = { 0, 0, 1, 1 };
 }
 
@@ -60,5 +57,4 @@ void gfx::freeRes(){
 	SDL_DestroyTexture(texture);
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
-
 }

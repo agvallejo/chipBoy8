@@ -8,10 +8,9 @@ chip8::chip8(const char* gameName, const uint8_t* keyPtr){
 	pc = 0x200;
 
 	//---Reset of system variables
-	memset(memory, 0, 4096);
-	memset(V, 0, 16);
-	memset(stack, 0, 16);
-	sp = I = 0;
+	I = 0;
+	memory.fill(0);
+	V.fill(0);
 	clearScreen();
 
 	//---CHIP-8 font sprites
@@ -33,8 +32,8 @@ chip8::chip8(const char* gameName, const uint8_t* keyPtr){
 		0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
 		0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 	};
-	for (int i = 0; i < 80; i++)
-		memory[i] = chip8_fontset[i];
+	for (auto i : memory)
+		i = chip8_fontset[i];
 
 	//---Random seed initialization
 	srand((unsigned int) time(NULL));
@@ -62,105 +61,108 @@ void chip8::emulateCycle(){
 		if (opcode == 0x00E0)			//CLS: clears the screen
 			clearScreen();
 		else if (opcode == 0x00EE){		//RET:	Returns from subroutine
-			sp--;
-			pc = stack[sp];
+			pc = stack.top();
+			stack.pop();
+//			sp--;
+//			pc = stack[sp];
 		}
 		break;
 	case 1:								//JP: Jumps to addr NNN [0x1NNN]
 		pc = opcode & 0x0FFF;
 		break;
 	case 2:								//CALL: Calls subroutine at NNN [0x2NNN]
-		stack[sp] = pc;
-		sp++;
+//		stack[sp] = pc;
+//		sp++;
+		stack.push(pc);
 		pc = opcode & 0x0FFF;
 		break;
 	case 3:								//SE: Skips next inst. if VX==NN [0x3XNN]
-		if (V[(opcode & 0x0F00) >> 8] == (opcode & 0x00FF))
+		if (V.at((opcode & 0x0F00) >> 8) == (opcode & 0x00FF))
 			pc += 2;
 		break;
 	case 4:								//SNE: Skips next inst. if VX!=NN [0x4XNN]
-		if (V[(opcode & 0x0F00) >> 8] != (opcode & 0x00FF))
+		if (V.at((opcode & 0x0F00) >> 8) != (opcode & 0x00FF))
 			pc += 2;
 		break;
 	case 5:								//SE: Skip next inst. if VX==VY [0x5XY0]
-		if (V[(opcode & 0x0F00) >> 8] == V[(opcode & 0x00F0) >> 4])
+		if (V.at((opcode & 0x0F00) >> 8) == V.at((opcode & 0x00F0) >> 4))
 			pc += 2;
 		break;
 	case 6:								//LD: VX=NN [0x6XNN]
-		V[(opcode & 0x0F00) >> 8] = (opcode & 0x00FF);
+		V.at((opcode & 0x0F00) >> 8) = (opcode & 0x00FF);
 		break;
 	case 7:								//ADD: VX+=NN [0x7XNN]
-		V[(opcode & 0x0F00) >> 8] += (opcode & 0x00FF);
+		V.at((opcode & 0x0F00) >> 8) += (opcode & 0x00FF);
 		break;
 	case 8:
 		switch (opcode & 0xF00F){
 		case 0x8000:					//LD: VX=VY  [0x8XY0]
-			V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x00F0) >> 4];
+			V.at((opcode & 0x0F00) >> 8) = V.at((opcode & 0x00F0) >> 4);
 			break;
 		case 0x8001:					//OR: VX|=VY [0x8XY1]
-			V[(opcode & 0x0F00) >> 8] |= V[(opcode & 0x00F0) >> 4];
+			V.at((opcode & 0x0F00) >> 8) |= V.at((opcode & 0x00F0) >> 4);
 			break;
 		case 0x8002:					//AND: VX&=VY [0x8XY2]
-			V[(opcode & 0x0F00) >> 8] &= V[(opcode & 0x00F0) >> 4];
+			V.at((opcode & 0x0F00) >> 8) &= V.at((opcode & 0x00F0) >> 4);
 			break;
 		case 0x8003:					//XOR: VX^=VY [0x8XY3]
-			V[(opcode & 0x0F00) >> 8] ^= V[(opcode & 0x00F0) >> 4];
+			V.at((opcode & 0x0F00) >> 8) ^= V.at((opcode & 0x00F0) >> 4);
 			break;
 		case 0x8004:					//ADD: VX+=VY [0x8XY4]
-			if ((15 - V[(opcode & 0x0F00) >> 8]) < V[(opcode & 0x00F0) >> 4])
-				V[0xF] = 1;		//V[F] is set in case of overflow
+			if ((15 - V.at((opcode & 0x0F00) >> 8)) < V.at((opcode & 0x00F0) >> 4))
+				V.at(0xF) = 1;		//V[F] is set in case of overflow
 			else
-				V[0xF] = 0;
-			V[(opcode & 0x0F00) >> 8] += V[(opcode & 0x00F0) >> 4];
+				V.at(0xF) = 0;
+			V.at((opcode & 0x0F00) >> 8) += V.at((opcode & 0x00F0) >> 4);
 			break;
 		case 0x8005:					//SUB: VX-=VY [0x8XY5]
-			if (V[(opcode & 0x0F00) >> 8] < V[(opcode & 0x00F0) >> 4])
-				V[0xF] = 0;		//V[F] is unset if there's a borrow
+			if (V.at((opcode & 0x0F00) >> 8) < V.at((opcode & 0x00F0) >> 4))
+				V.at(0xF) = 0;		//V[F] is unset if there's a borrow
 			else
-				V[0xF] = 1;
+				V.at(0xF) = 1;
 			V[(opcode & 0x0F00) >> 8] -= V[(opcode & 0x00F0) >> 4];
 			break;
 		case 0x8006:					//SHR: VX>>=1 [0x8X06]
 			if (V[(opcode & 0x0F00) >> 8] & 0x01)
-				V[0xF] = 1; //if VX is odd, VF is set
+				V.at(0xF) = 1; //if VX is odd, VF is set
 			else
-				V[0xF] = 0;
+				V.at(0xF) = 0;
 			V[(opcode & 0x0F00) >> 8] >>= 1;
 			break;
 		case 0x8007:					//SUBN: VX=VY-VX [0x8XY7]
-			if (V[(opcode & 0x0F00) >> 8] > V[(opcode & 0x00F0) >> 4])
-				V[0xF] = 0;		//V[F] is unset if there's a borrow
+			if (V.at((opcode & 0x0F00) >> 8) > V.at((opcode & 0x00F0) >> 4))
+				V.at(0xF) = 0;		//V[F] is unset if there's a borrow
 			else
-				V[0xF] = 1;
-			V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x00F0) >> 4] - V[(opcode & 0x0F00) >> 8];
+				V.at(0xF) = 1;
+			V.at((opcode & 0x0F00) >> 8) = V.at((opcode & 0x00F0) >> 4) - V.at((opcode & 0x0F00) >> 8);
 			break;
 		case 0X800E:					//SHL: VX<<=1 [0x8XYE]
-			if (V[(opcode & 0x0F00) >> 8] & 0x80)
-				V[0xF] = 1;
+			if (V.at((opcode & 0x0F00) >> 8) & 0x80)
+				V.at(0xF) = 1;
 			else
-				V[0xF] = 0;
-			V[(opcode & 0x0F00) >> 8] <<= 1;
+				V.at(0xF) = 0;
+			V.at((opcode & 0x0F00) >> 8) <<= 1;
 			break;
 		default:
 			std::cout << "Unrecognised opcode:" << opcode << std::endl;
 		} //0x8000 switch end
 		break;
 	case 9:							//SNE: Skips next inst. if VX!=VY [0x9XY0]
-		if (V[(opcode & 0x0F00) >> 8] != V[(opcode & 0x00F0) >> 4])
+		if (V.at((opcode & 0x0F00) >> 8) != V.at((opcode & 0x00F0) >> 4))
 			pc += 2;
 		break;
 	case 0xA:						//LD: I=NNN [0xANNN]
 		I = opcode & 0x0FFF;
 		break;
 	case 0xB:						//JP: Jumps to addr V0+NNN [0xBNNN]
-		pc = V[0] + (opcode & 0x0FFF);
+		pc = V.at(0) + (opcode & 0x0FFF);
 		break;
 	case 0xC:						//RND: VX=8bit random AND NN [0xCXNN]
-		V[(opcode & 0x0F00) >> 8] = (rand() % 256) & (opcode & 0x00FF);
+		V.at((opcode & 0x0F00) >> 8) = (rand() % 256) & (opcode & 0x00FF);
 		break;
 	case 0xD:						//DRW: Draws N-bytes height sprite to screen at (VX,VY) XORed [0xDXYN]
 		uint8_t sprite, x, y;
-		V[0xF] = 0;
+		V.at(0xF) = 0;
 
 		for (int i = 0; i < (opcode & 0x000F); i++){
 			sprite = memory[I + i];
@@ -176,7 +178,7 @@ void chip8::emulateCycle(){
 
 					screen[x + y*CHIP8_WIDTH] ^= 1;
 					if (screen[x + y*CHIP8_WIDTH] == 0)
-						V[0xF] = 1;
+						V.at(0xF) = 1;
 				}//end if sprite
 			}//end for j
 		}//end for i
@@ -185,11 +187,11 @@ void chip8::emulateCycle(){
 	case 0xE:
 		switch (opcode & 0xF0FF){
 		case 0xE09E:				 //SKP: Skips next inst. if key[VX] is pressed [0xEX9E]
-			if (key[V[(opcode & 0x0F00) >> 8]])
+			if (key[V.at((opcode & 0x0F00) >> 8)])
 				pc += 2;
 			break;
 		case 0xE0A1:					//SKNP: Skips next inst. if key[VX] isn't pressed [0xEXA1]
-			if (!key[V[(opcode & 0x0F00) >> 8]])
+			if (!key[V.at((opcode & 0x0F00) >> 8)])
 				pc += 2;
 			break;
 		default:
@@ -199,7 +201,7 @@ void chip8::emulateCycle(){
 	case 0xF:
 		switch (opcode & 0xF0FF){
 		case 0xF007:				//LD: VX=DT [0xFX07]
-			V[(opcode & 0x0F00) >> 8] = delayTimer;
+			V.at((opcode & 0x0F00) >> 8) = delayTimer;
 			break;
 		case 0xF00A:				//LD: Waits for keypress and VX=key [0xFX0A]
 			//If no key is pressed, then pc-=2 overrides pc+=2 at the beginning
@@ -207,36 +209,36 @@ void chip8::emulateCycle(){
 			pc -= 2;
 			for (int i = 0; i < 16; i++){
 				if (key[i]){
-					V[(opcode & 0x0F00) >> 8] = i;
+					V.at((opcode & 0x0F00) >> 8) = i;
 					pc += 2;
 					break;
 				}
 			}
 			break;
 		case 0xF015:				//LD: DT=VX [0xFX15]
-			delayTimer = V[(opcode & 0x0F00) >> 8];
+			delayTimer = V.at((opcode & 0x0F00) >> 8);
 			break;
 		case 0xF018:				//LD: ST=VX [0xFX18]
-			soundTimer = V[(opcode & 0x0F00) >> 8];
+			soundTimer = V.at((opcode & 0x0F00) >> 8);
 			break;
 		case 0xF01E:				//ADD: I+=VX [0xFX1E]
-			I += V[(opcode & 0x0F00) >> 8];
+			I += V.at((opcode & 0x0F00) >> 8);
 			break;
 		case 0xF029:				//LD: I=location of sprite for digit VX [0xFX29]
-			I = 5 * V[(opcode & 0x0F00) >> 8];
+			I = 5 * V.at((opcode & 0x0F00) >> 8);
 			break;
 		case 0xF033:				//LD: Store the BCD representation of VX in locations I, I+1 and I+2. [0xFX33]
-			memory[I] = V[(opcode & 0x0F00) >> 8] / 100;
-			memory[I + 1] = (V[(opcode & 0x0F00) >> 8] / 10) - memory[I] * 10;
-			memory[I + 2] = V[(opcode & 0x0F00) >> 8] - ((memory[I] * 10 + memory[I + 1]) * 10);
+			memory.at(I) = V.at((opcode & 0x0F00) >> 8) / 100;
+			memory.at(I + 1) = (V.at((opcode & 0x0F00) >> 8) / 10) - memory.at(I) * 10;
+			memory.at(I + 2) = V.at((opcode & 0x0F00) >> 8) - ((memory.at(I) * 10 + memory.at(I + 1)) * 10);
 			break;
 		case 0xF055:				//LD: Store registers V0 through Vx in memory starting at location I. [0xFX55]
 			for (int i = 0; i <= ((opcode & 0x0F00) >> 8); i++)
-				memory[I + i] = V[i];
+				memory.at(I + i) = V.at(i);
 			break;
 		case 0xF065:				//LD: Read registers V0 through Vx from memory starting at location I. [0xFX65]
 			for (int i = 0; i <= ((opcode & 0x0F00) >> 8); i++)
-				V[i] = memory[I + i];
+				V.at(i) = memory.at(I + i);
 			break;
 		default:
 			std::cout << "Unrecognised opcode:" << opcode << std::endl;
@@ -264,7 +266,7 @@ bool chip8::loadGame(const char* fname) {
 	binSize = ftell(inFile);
 	rewind(inFile);
 
-	fread(memory + 0x200, 1, binSize, inFile);
+	fread(memory.data() + 0x200, 1, binSize, inFile);
 	fclose(inFile);
 
 	return true;

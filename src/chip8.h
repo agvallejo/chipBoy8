@@ -5,6 +5,9 @@
 #include "input.h"
 
 #include <iostream>
+#include <array>
+#include <stack>
+
 #include <stdlib.h>		
 #include <stdint.h>
 #include <string.h>
@@ -35,13 +38,9 @@ private:
 	uint8_t delayTimer;				//DT
 	uint8_t soundTimer;				//ST
 
-	uint16_t opcode;				//present opcode
+	uint16_t opcode;					//present opcode
 	uint16_t I;						//Index register
-	uint16_t pc;					//Program counter
-	uint16_t sp;					//Stack pointer
-
-	uint8_t V[16];					//15 registers (16th is used for carries)
-	uint8_t memory[4096];
+	uint16_t pc;				//Program counter
 
 	//The screen uses a 1D array for pointer economy
 	uint8_t screen[CHIP8_WIDTH*CHIP8_HEIGHT];
@@ -50,8 +49,10 @@ private:
 	const uint8_t* key;
 
 	//CHIP-8 used a 12 levels stack, but many modern games asume bigger stacks,
-	//so we are making it 16 levels, just in case.
-	uint16_t stack[16];
+	//so we are making it able to increase dynamically on the heap by using std::stack
+	std::stack<uint16_t> stack;
+	std::array<uint8_t, 16>		V;		//15 registers (16th is used for carries)
+	std::array<uint8_t, 4096>	memory;
 
 	bool loadGame(const char*);
 	void clearScreen();

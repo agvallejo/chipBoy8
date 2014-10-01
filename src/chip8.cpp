@@ -251,25 +251,16 @@ void chip8::emulateCycle(){
 	}//Opcodes switch end
 }
 
-bool chip8::loadGame(const char* fname) {
-	FILE *inFile;
-	size_t binSize;
+void chip8::loadGame(const char* fname) {
+	std::ifstream inFile(fname, std::ios::binary | std::ios::ate);
+	std::streampos binSize = inFile.tellg();
+	uint8_t* memoryPtr = memory.data() + 0x200;
 
-	if (fopen_s(&inFile, fname, "rb")) {
-		printf("Error al abrir el fichero '%s'.\n", fname);
-		return false;
-	}
+	inFile.seekg(0, std::ios::beg);
+	inFile.read((char*) memoryPtr, binSize);
+	inFile.close();
 
-
-
-	fseek(inFile, 0, SEEK_END);
-	binSize = ftell(inFile);
-	rewind(inFile);
-
-	fread(memory.data() + 0x200, 1, binSize, inFile);
-	fclose(inFile);
-
-	return true;
+	return;
 
 }
 

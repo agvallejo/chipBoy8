@@ -4,6 +4,7 @@
 #include "gfx.h"
 #include "input.h"
 
+#include <fstream>
 #include <iostream>
 #include <array>
 #include <stack>
@@ -54,7 +55,7 @@ private:
 	std::array<uint8_t, 16>		V;		//15 registers (16th is used for carries)
 	std::array<uint8_t, 4096>	memory;
 
-	bool loadGame(const char*);
+	void loadGame(const char*);
 	void clearScreen();
 
 };

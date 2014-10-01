@@ -32,8 +32,8 @@ chip8::chip8(const char* gameName, const uint8_t* keyPtr){
 		0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
 		0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 	};
-	for (auto i : memory)
-		i = chip8_fontset[i];
+	for (int i = 0; i < 80; i++)
+		memory[i] = chip8_fontset[i];
 
 	//---Random seed initialization
 	srand((unsigned int) time(NULL));

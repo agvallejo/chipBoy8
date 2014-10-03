@@ -2,7 +2,7 @@ chipBoy8
 ========
 > A CHIP-8 interpreter written in C++ using SDL2.
 
-Even though there are still some bugs left, the code is pretty much functional already by making a good number of games playable. The code has only been tested on Windows with Visual Studio 2013, but support for GNU/Linux, Mac OS X and different *BSD flavours shouldn't (and hopefully won't) take long.
+Even though there are still some bugs left, the code is pretty much functional already by making a good number of games playable. The code has only been tested on Windows and ArchLinux, but Mac OS X should be supported, as well as the different *BSD flavours.
 
 
 ## Usage
